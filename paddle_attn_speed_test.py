@@ -20,10 +20,6 @@ class LoadYaml:
         with open(yaml_path, encoding='utf8') as f:
             data = yaml.load(f, Loader=yaml.FullLoader)
 
-        self.batch_size = data['BATCH_SIZE']
-        self.seq_len = data['SEQ_LEN']
-        self.n_head = data['N_HEAD']
-        self.d_model = data['D_MODEL']
         try: 
             self.dtype = eval(data['DTYPE'])
         except:
@@ -35,31 +31,33 @@ class LoadYaml:
         self.warmup_steps = data['WARMUP_STEPS']
         self.test_steps = data['TEST_STEPS']
         self.device = data['DEVICE']
+        self.dropout_prob = data['DROPOUT_PROB']
 
         self.training = data['TRAINING']
         self.seed = data['SEED']
-        self.scale = 1.0 / np.sqrt(self.d_model)
 
 class SpeedTest:
     def __init__(self):
         parser = argparse.ArgumentParser()
         parser.add_argument('--yaml', help='config file path')
         parser.add_argument('--test_case', help='which case to test', type=str)
+        parser.add_argument('--shape', help="shape of q,k,v")
         opt = parser.parse_args()
 
         assert os.path.exists(opt.yaml)
         self.cfg = LoadYaml(opt.yaml)
 
+        # need improve
         self.test_case = opt.test_case
-        print(self.test_case)
+        self.shape = tuple(map(int, opt.shape.split(',')))
 
         self.ctx = cuda.current_context(self.cfg.device)
 
 
         def init_input():
-            q = paddle.randn((self.cfg.batch_size, self.cfg.seq_len, self.cfg.n_head, self.cfg.d_model // self.cfg.n_head), dtype=self.cfg.dtype).cuda(self.cfg.device)
-            k = paddle.randn((self.cfg.batch_size, self.cfg.seq_len, self.cfg.n_head, self.cfg.d_model // self.cfg.n_head), dtype=self.cfg.dtype).cuda(self.cfg.device)
-            v = paddle.randn((self.cfg.batch_size, self.cfg.seq_len, self.cfg.n_head, self.cfg.d_model // self.cfg.n_head), dtype=self.cfg.dtype).cuda(self.cfg.device)
+            q = paddle.randn(self.shape, dtype=self.cfg.dtype).cuda(self.cfg.device)
+            k = paddle.randn(self.shape, dtype=self.cfg.dtype).cuda(self.cfg.device)
+            v = paddle.randn(self.shape, dtype=self.cfg.dtype).cuda(self.cfg.device)
             q.stop_gradient = False
             k.stop_gradient = False
             v.stop_gradient = False
@@ -141,6 +139,13 @@ class SpeedTest:
     
 
     def test(self):
+        if self.test_case == "core_attn_fwd_test" or self.test_case == "core_attn_fwd_bwd_test":
+            self.test_cases[self.test_case](dropout_prob=self.cfg.dropout_prob)
+        elif self.test_case == "mem_efficient_attn_fwd_test" or self.test_case == "mem_efficient_attn_fwd_bwd_test":
+            self.test_cases[self.test_case](p=self.cfg.dropout_prob)
+        elif self.test_case == "flash_attn_fwd_test" or self.test_case == "flash_attn_fwd_bwd_test":
+            self.test_cases[self.test_case](dropout=self.cfg.dropout_prob)
+        
         used_time_ms, used_mem_m = self.test_cases[self.test_case]()
         print(self.test_case + ": {0:.2f} ms, {1:.2f} mb".format(used_time_ms, used_mem_m))
 
