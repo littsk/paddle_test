@@ -145,7 +145,7 @@ class SpeedTest:
             used_time_ms, used_mem_m = self.test_cases[self.test_case](p=self.cfg.dropout_prob)
         elif self.test_case == "flash_attn_fwd_test" or self.test_case == "flash_attn_fwd_bwd_test":
             used_time_ms, used_mem_m = self.test_cases[self.test_case](dropout=self.cfg.dropout_prob)
-        print(self.test_case + ": {0:.2f} ms, {1:.2f} mb".format(used_time_ms, used_mem_m))
+        print(self.test_case + self.shape + ": {0:.2f} ms, {1:.2f} mb".format(used_time_ms, used_mem_m))
 
 
 if __name__ == "__main__":
