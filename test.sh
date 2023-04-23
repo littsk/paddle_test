@@ -7,6 +7,8 @@ else
     echo "Directory './logs' already exists."
 fi
 
+rm -rf ./logs/*
+
 seq_lens=(4096 8192 16384 32768)
 n_heads=(16 32 64 128)
 test_cases=("core_attn_fwd_test"  "core_attn_fwd_bwd_test" "mem_efficient_attn_fwd_test" \
@@ -22,7 +24,7 @@ do
             --yaml ./config/test_cfg.yaml \
             --shape 1,$seq_len,$n_head,64 \
             --test_case $test_case \
-            > ./logs/result_dropout.log
+            >> ./logs/result_dropout.log
         done
     done
 done
