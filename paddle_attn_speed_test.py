@@ -140,13 +140,11 @@ class SpeedTest:
 
     def test(self):
         if self.test_case == "core_attn_fwd_test" or self.test_case == "core_attn_fwd_bwd_test":
-            self.test_cases[self.test_case](dropout_prob=self.cfg.dropout_prob)
+            used_time_ms, used_mem_m = self.test_cases[self.test_case](dropout_prob=self.cfg.dropout_prob)
         elif self.test_case == "mem_efficient_attn_fwd_test" or self.test_case == "mem_efficient_attn_fwd_bwd_test":
-            self.test_cases[self.test_case](p=self.cfg.dropout_prob)
+            used_time_ms, used_mem_m = self.test_cases[self.test_case](p=self.cfg.dropout_prob)
         elif self.test_case == "flash_attn_fwd_test" or self.test_case == "flash_attn_fwd_bwd_test":
-            self.test_cases[self.test_case](dropout=self.cfg.dropout_prob)
-        
-        used_time_ms, used_mem_m = self.test_cases[self.test_case]()
+            used_time_ms, used_mem_m = self.test_cases[self.test_case](dropout=self.cfg.dropout_prob)
         print(self.test_case + ": {0:.2f} ms, {1:.2f} mb".format(used_time_ms, used_mem_m))
 
 

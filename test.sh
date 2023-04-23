@@ -22,7 +22,7 @@ do
             --yaml ./config/test_cfg.yaml \
             --shape 1,$seq_len,$n_head,64 \
             --test_case $test_case \
-            > result_dropout.log
+            > ./logs/result_dropout.log
         done
     done
 done
